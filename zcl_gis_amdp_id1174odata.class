@@ -1,0 +1,483 @@
+"! <p class="shorttext synchronized" lang="en">ODATA FOR ID1174</p>
+"! <p class="shorttext synchronized" lang="en">https://confluence.shared.tds.metsagroup.com/display/MGEX/SaveResource</p>
+CLASS zcl_gis_amdp_id1174odata DEFINITION
+  PUBLIC
+  INHERITING FROM zcl_gis_amdp_odata_abstract.
+
+  PUBLIC SECTION.
+    CLASS-METHODS: get_kemera_decision_geomsodata FOR TABLE FUNCTION zget_kemeradecisiongeoms_tf.
+    CLASS-METHODS: get_kemera_decisions_odata FOR TABLE FUNCTION zget_kemeradecisions_tf.
+    CLASS-METHODS: get_kemeracompletion_decs FOR TABLE FUNCTION zget_kemeracompdecs_tf.
+    CLASS-METHODS: get_kemeracompdec_geoms_tf FOR TABLE FUNCTION zget_kemeracompdec_geoms_tf.
+
+
+    CLASS-METHODS: get_kemeracompdec_geoms
+      IMPORTING
+                VALUE(iv_where)                TYPE string
+                VALUE(iv_offset)               TYPE int8
+                VALUE(iv_max_rows)             TYPE int4
+      EXPORTING VALUE(out_kemeracompdec_geoms) TYPE tt_kemera_compdec_geoms
+      RAISING   cx_amdp_error.
+
+    CLASS-METHODS save_kemera_decision_odata
+      IMPORTING
+                VALUE(case_number)         TYPE  zcasenumber
+                VALUE(case_date)           TYPE  string
+                VALUE(decision_number)     TYPE  string
+                VALUE(decision_date)       TYPE  string
+                VALUE(decision_geometries) TYPE  zprdtid1174_gis_save_kem_tab1 OPTIONAL
+                VALUE(works)               TYPE  zprdtid1174_gis_save_keme_tab OPTIONAL
+*                VALUE(action)              TYPE  string
+      RAISING   cx_amdp_error.
+
+
+
+    CLASS-METHODS save_kemeracompletion_decs
+      IMPORTING
+                VALUE(financingactnumber)             TYPE  zfinactnumber
+                VALUE(completiondeclarationreference) TYPE  string
+                VALUE(decisiondate)                   TYPE  string
+                VALUE(sentdate)                       TYPE  string
+                VALUE(startdate)                      TYPE  string
+                VALUE(enddate)                        TYPE  string
+                VALUE(workcode)                       TYPE  string
+                VALUE(action)                         TYPE  string"Action 1 is save 2 is for Update
+      RAISING   cx_amdp_error.
+
+
+    CLASS-METHODS save_kemeracompletion_decgeoms
+      IMPORTING
+                VALUE(standreference)       TYPE  zSTANDREFERENCE
+                VALUE(financingactnumber)   TYPE  zfinactnumber
+                VALUE(standnumber)          TYPE  string
+                VALUE(geojson)              TYPE  string
+                VALUE(status)               TYPE  string
+                VALUE(standnumberextension) TYPE  string
+                VALUE(costtype)             TYPE  string
+                VALUE(action)               TYPE  string"Action 1 is save 2 is for Update
+      RAISING   cx_amdp_error.
+
+
+    CLASS-METHODS savekemera_decision_geomsodata
+      IMPORTING
+                VALUE(stand_reference)        TYPE  zstandreference
+                VALUE(stand_id)               TYPE  string
+                VALUE(case_number)            TYPE  zcasenumber
+                VALUE(geojson)                TYPE   string
+                VALUE(cost_type)              TYPE  string
+                VALUE(status)                 TYPE   string
+                VALUE(stand_number)           TYPE  string
+                VALUE(stand_number_extension) TYPE  string
+*                VALUE(action)                 TYPE  string
+      RAISING   cx_amdp_error.
+
+    CLASS-METHODS: _is_kemeracompletiondec_exist
+      IMPORTING
+        where_clause_string TYPE string
+      RETURNING
+        VALUE(r_result)     TYPE abap_bool.
+
+    CLASS-METHODS:_is_kemeracompdecgeom_exist
+      IMPORTING
+        where_clause_string TYPE string
+      RETURNING
+        VALUE(r_result)     TYPE abap_bool.
+
+
+
+
+
+  PROTECTED SECTION.
+
+  PRIVATE SECTION.
+
+
+ENDCLASS.
+
+
+
+CLASS zcl_gis_amdp_id1174odata IMPLEMENTATION.
+
+
+  METHOD _is_kemeracompletiondec_exist.
+*  Check if the kemera completion dec exists or not
+    CHECK NOT where_clause_string IS INITIAL.
+    SELECT SINGLE @abap_true
+       FROM zget_kemeracompdecs_tf( p_where = @where_clause_string )
+        INTO @r_result.
+  ENDMETHOD.
+
+  METHOD _is_kemeracompdecgeom_exist.
+*  Check if the kemera completion dec exists or not
+    CHECK NOT where_clause_string IS INITIAL.
+    SELECT SINGLE @abap_true
+       FROM zget_kemeracompdec_geoms_tf( p_where = @where_clause_string )
+        INTO @r_result.
+  ENDMETHOD.
+
+
+  METHOD save_kemeracompletion_decgeoms BY DATABASE PROCEDURE
+                               FOR HDB LANGUAGE SQLSCRIPT USING
+                            zcl_gis_amdp_odata_abstract=>geo_json_norm
+                             .
+
+    declare geometry_converted st_geometry;
+
+    call "ZCL_GIS_AMDP_ODATA_ABSTRACT=>GEO_JSON_NORM"(
+        json=>:GEOJSON,
+        shape=>:geometry_converted
+    );
+
+    if :action = '1'--SAVE
+    THEN
+          merge into GISDATA.KEMERACOMPLDECLARGEOMETRY using
+                    ( select :STANDREFERENCE,
+                             :FINANCINGACTNUMBER,
+                             :STANDNUMBER,
+                             :GEOMETRY_CONVERTED,
+                             :STATUS,
+                             :STANDNUMBEREXTENSION,
+                             :COSTTYPE from dummy )
+                    on :STANDREFERENCE = KEMERACOMPLDECLARGEOMETRY.STANDREFERENCE
+                    when not matched then insert (
+                       STANDREFERENCE,
+                       FINANCINGACTNUMBER,
+                       STANDNUMBER,
+                       GEOLOC,
+                       STATUS,
+                       STANDNUMBEREXTENSION,
+                       COSTTYPE
+                    )
+                    values(
+                         :STANDREFERENCE,
+                         :FINANCINGACTNUMBER,
+                         :STANDNUMBER,
+                         :GEOMETRY_CONVERTED,
+                         :STATUS,
+                         :STANDNUMBEREXTENSION,
+                         :COSTTYPE
+                    );
+   ELSE--UPDATE
+            merge into GISDATA.KEMERACOMPLDECLARGEOMETRY using
+                    ( select :STANDREFERENCE,
+                             :FINANCINGACTNUMBER,
+                             :STANDNUMBER,
+                             :GEOMETRY_CONVERTED,
+                             :STATUS,
+                             :STANDNUMBEREXTENSION,
+                             :COSTTYPE from dummy )
+                    on :STANDREFERENCE = KEMERACOMPLDECLARGEOMETRY.STANDREFERENCE
+                    when  matched then update set
+                KEMERACOMPLDECLARGEOMETRY.STANDREFERENCE = :STANDREFERENCE,
+                KEMERACOMPLDECLARGEOMETRY.FINANCINGACTNUMBER = :FINANCINGACTNUMBER,
+                KEMERACOMPLDECLARGEOMETRY.STANDNUMBER =  :STANDNUMBER,
+                KEMERACOMPLDECLARGEOMETRY.GEOLOC =  :GEOMETRY_CONVERTED,
+                KEMERACOMPLDECLARGEOMETRY.STATUS =  :STATUS,
+                KEMERACOMPLDECLARGEOMETRY.STANDNUMBEREXTENSION =  :STANDNUMBEREXTENSION,
+                KEMERACOMPLDECLARGEOMETRY.COSTTYPE =  :COSTTYPE;
+   END IF;
+
+
+  ENDMETHOD.
+
+
+  METHOD save_kemeracompletion_decs BY DATABASE PROCEDURE
+                               FOR HDB LANGUAGE SQLSCRIPT.
+
+    if :action = '1'--SAVE
+    THEN
+     merge into GISDATA.KEMERACOMPLETIONDECLARATION using
+            ( select :FINANCINGACTNUMBER,
+                     :COMPLETIONDECLARATIONREFERENCE,
+                     :DECISIONDATE,
+                     :SENTDATE,
+                     :STARTDATE,
+                     :ENDDATE,
+                     :WORKCODE from dummy )
+            on :FINANCINGACTNUMBER = KEMERACOMPLETIONDECLARATION.FINANCINGACTNUMBER
+            when not matched then insert (
+               FINANCINGACTNUMBER,
+               COMPLETIONDECLARATIONREFERENCE,
+               DECISIONDATE,
+               SENTDATE,
+               STARTDATE,
+               ENDDATE,
+               WORKCODE
+            )
+            values(
+                 :FINANCINGACTNUMBER,
+                 :COMPLETIONDECLARATIONREFERENCE,
+                 to_timestamp(:DECISIONDATE,'YYYY-MM-DD'),
+                 to_timestamp(:SENTDATE,'YYYY-MM-DD'),
+                 to_timestamp(:STARTDATE,'YYYY-MM-DD'),
+                 to_timestamp(:ENDDATE,'YYYY-MM-DD'),
+                 :WORKCODE
+            )
+       ;
+
+    ELSE--UPDATE
+       merge into GISDATA.KEMERACOMPLETIONDECLARATION using
+            ( select :FINANCINGACTNUMBER,
+                     :COMPLETIONDECLARATIONREFERENCE,
+                     :DECISIONDATE,
+                     :SENTDATE,
+                     :STARTDATE,
+                     :ENDDATE,
+                     :WORKCODE from dummy )
+            on :FINANCINGACTNUMBER = KEMERACOMPLETIONDECLARATION.FINANCINGACTNUMBER
+            when matched then update set
+                KEMERACOMPLETIONDECLARATION.COMPLETIONDECLARATIONREFERENCE = :COMPLETIONDECLARATIONREFERENCE,
+                KEMERACOMPLETIONDECLARATION.DECISIONDATE = to_timestamp(:DECISIONDATE,'YYYY-MM-DD'),
+                KEMERACOMPLETIONDECLARATION.SENTDATE =  to_timestamp(:SENTDATE,'YYYY-MM-DD'),
+                KEMERACOMPLETIONDECLARATION.STARTDATE = to_timestamp(:STARTDATE,'YYYY-MM-DD'),
+                KEMERACOMPLETIONDECLARATION.ENDDATE = to_timestamp(:ENDDATE,'YYYY-MM-DD'),
+                KEMERACOMPLETIONDECLARATION.WORKCODE = :WORKCODE
+
+       ;
+    END IF ;
+
+
+  ENDMETHOD.
+
+
+
+
+
+
+  METHOD get_kemeracompdec_geoms BY DATABASE PROCEDURE
+                               FOR HDB LANGUAGE SQLSCRIPT
+                               OPTIONS READ-ONLY USING
+                               zcl_gis_amdp_odata_abstract=>geo_json_denorm .
+
+    DECLARE index INTEGER;
+    DECLARE lv_geojson STRING;
+
+   lt_filtered_data = apply_filter ( "GISDATA"."KEMERACOMPLDECLARGEOMETRY" , :IV_WHERE) ; --SELECT  actualgeometryid,
+
+
+* Can not do the geoloc to gojson conversion here as string length issue in table functions
+    lt_kemeracompdec_geoms =  SELECT standreference,
+                                    financingactnumber,
+                                    standnumber,
+                                    geoloc AS geoloc,
+                                    CAST(status as INTEGER) AS status,
+                                    standnumberextension,
+                                    costtype
+                            FROM :lt_filtered_data
+                              ORDER BY standreference
+                             LIMIT :iv_max_rows OFFSET :iv_offset;
+
+
+*** Need to loop over and convert each geoloc to GEOJson format
+    for index in 1..record_count( :lt_kemeracompdec_geoms )
+          DO
+           declare shape st_geometry = :lt_kemeracompdec_geoms.geoloc[:index];
+
+           CALL "ZCL_GIS_AMDP_ODATA_ABSTRACT=>GEO_JSON_DENORM"(
+                    shape => shape,
+                    json  => lv_geojson
+                );
+
+         :out_kemeracompdec_geoms.insert((:lt_kemeracompdec_geoms.standreference[:index],
+                                             :lt_kemeracompdec_geoms.financingactnumber[:index],
+                                              :lt_kemeracompdec_geoms.standnumber[:index],
+                                              :lv_geojson,
+                                               to_nvarchar(:lt_kemeracompdec_geoms.status[:index]),
+                                              :lt_kemeracompdec_geoms.standnumberextension[:index],
+                                              :lt_kemeracompdec_geoms.costtype[:index]
+                                              ));
+
+
+
+   end for;
+
+
+
+
+  ENDMETHOD.
+
+
+  METHOD get_kemeracompdec_geoms_tf BY DATABASE FUNCTION
+                               FOR HDB LANGUAGE SQLSCRIPT
+                               OPTIONS READ-ONLY.
+
+
+    lt_kemeracompdec_geoms = apply_filter ( "GISDATA"."KEMERACOMPLDECLARGEOMETRY" , :P_WHERE) ; --SELECT  actualgeometryid,
+
+      return SELECT standreference,
+                    financingactnumber,
+                    standnumber,
+                    geoloc AS geoloc,
+                     to_nvarchar(status) AS status,
+                    standnumberextension,
+                     costtype
+                    FROM :lt_kemeracompdec_geoms;
+
+  ENDMETHOD.
+
+
+  METHOD get_kemeracompletion_decs BY DATABASE FUNCTION
+                             FOR HDB LANGUAGE SQLSCRIPT
+                             OPTIONS READ-ONLY.
+
+
+    lt_kemeracompletion_decs = apply_filter ( "GISDATA"."KEMERACOMPLETIONDECLARATION" , :P_WHERE) ; --SELECT  actualgeometryid,
+
+
+      return SELECT financingactnumber,
+                    completiondeclarationreference,
+                    to_varchar(decisiondate,'YYYY-MM-DD') as decisiondate,
+                    to_varchar(sentdate,'YYYY-MM-DD') as sentdate,
+                    to_varchar(startdate,'YYYY-MM-DD') as startdate,
+                    to_varchar(enddate,'YYYY-MM-DD') as enddate,
+                    workcode
+                    FROM :lt_kemeracompletion_decs;
+
+  ENDMETHOD.
+
+  METHOD get_kemera_decisions_odata BY DATABASE FUNCTION
+                             FOR HDB LANGUAGE SQLSCRIPT
+                             OPTIONS READ-ONLY.
+
+
+    lt_kemera_decisions = apply_filter ( "GISDATA"."KEMERADECISION" , :P_WHERE) ; --SELECT  actualgeometryid,
+
+
+    return SELECT casenumber,
+                  to_varchar(casedate,'YYYY-MM-DD') as casedate,
+                  decisionnumber,
+                  to_varchar(decisiondate,'YYYY-MM-DD') as decisiondate
+                  FROM :lt_kemera_decisions;
+
+  ENDMETHOD.
+
+
+  METHOD get_kemera_decision_geomsodata BY DATABASE FUNCTION
+                             FOR HDB LANGUAGE SQLSCRIPT
+                             OPTIONS READ-ONLY
+*                             USING
+*                            zcl_gis_amdp_util=>geo_json_denorm
+                             .
+    declare index int;
+    declare lv_geojson nvarchar( 1000 );
+    declare geometry_converted st_geometry;
+
+    lt_kemera_decision_geoms = apply_filter ( "GISDATA"."KEMERADECISIONGEOMETRY" , :P_WHERE) ; --SELECT  actualgeometryid,
+
+
+    RETURN SELECT  standreference,
+                   casenumber,
+                   standid,
+                   geoloc AS geojson,
+                   costtype,
+                   to_nvarchar(status) AS status,
+                   standnumber,
+                   standnumberextension
+                  FROM :lt_kemera_decision_geoms;
+
+
+
+
+  ENDMETHOD.
+
+
+
+  METHOD save_kemera_decision_odata BY DATABASE PROCEDURE
+                             FOR HDB LANGUAGE SQLSCRIPT.
+
+    merge into GISDATA.KEMERADECISION using
+        ( select :case_number, :case_date, :decision_number, :decision_date from dummy )
+        on :case_number = KEMERADECISION.CASENUMBER
+        when matched then update set
+            KEMERADECISION.CASEDATE = :case_date,
+            KEMERADECISION.DECISIONNUMBER = :decision_number,
+            KEMERADECISION.DECISIONDATE = :decision_date
+        when not matched then insert (
+            CASENUMBER,
+            CASEDATE,
+            DECISIONNUMBER,
+            DECISIONDATE
+        )
+        values(
+            :case_number,
+            :case_date,
+            :decision_number,
+            :decision_date
+        )
+   ;
+
+*    insert into  GISDATA.KEMERADECISION
+*    select case_number,
+*    to_timestamp(case_date,'YYYY-MM-DD'),
+*    decision_number,
+*    to_timestamp( decision_date,'YYYY-MM-DD')
+*    from :kemera_decisions;
+
+
+  ENDMETHOD.
+
+  METHOD savekemera_decision_geomsodata BY DATABASE PROCEDURE
+                             FOR HDB LANGUAGE SQLSCRIPT
+                            USING
+                            zcl_gis_amdp_odata_abstract=>geo_json_norm
+                             .
+
+    declare geometry_converted st_geometry;
+
+    call "ZCL_GIS_AMDP_ODATA_ABSTRACT=>GEO_JSON_NORM"(
+        json=>:GEOJSON,
+        shape=>:geometry_converted
+    );
+
+    merge into GISDATA.KEMERADECISIONGEOMETRY using
+          ( select
+              :STAND_REFERENCE,
+              :STAND_ID,
+              :CASE_NUMBER,
+              :geometry_converted,
+              :COST_TYPE,
+              :STATUS,
+              :STAND_NUMBER,
+              :STAND_NUMBER_EXTENSION
+           from dummy )
+          on :case_number = KEMERADECISIONGEOMETRY.CASENUMBER
+          when matched then update set
+              KEMERADECISIONGEOMETRY.STANDREFERENCE= :STAND_REFERENCE,
+              KEMERADECISIONGEOMETRY.STANDID = :STAND_ID,
+              KEMERADECISIONGEOMETRY.CASENUMBER = :CASE_NUMBER,
+              KEMERADECISIONGEOMETRY.GEOLOC = :geometry_converted,
+              KEMERADECISIONGEOMETRY.COSTTYPE = :COST_TYPE,
+              KEMERADECISIONGEOMETRY.STATUS = :STATUS,
+              KEMERADECISIONGEOMETRY.STANDNUMBER = :STAND_NUMBER,
+              KEMERADECISIONGEOMETRY.STANDNUMBEREXTENSION = :STAND_NUMBER_EXTENSION
+          when not matched then insert (
+              STANDREFERENCE,
+              STANDID,
+              CASENUMBER,
+              GEOLOC,
+              COSTTYPE,
+              STATUS,
+              STANDNUMBER,
+              STANDNUMBEREXTENSION
+          )
+          values(
+              :STAND_REFERENCE,
+              :STAND_ID,
+              :CASE_NUMBER,
+              :geometry_converted,
+              :COST_TYPE,
+              :STATUS,
+              :STAND_NUMBER,
+              :STAND_NUMBER_EXTENSION
+          )
+     ;
+
+
+
+
+
+  ENDMETHOD.
+
+
+
+ENDCLASS.

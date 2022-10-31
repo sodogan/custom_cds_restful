@@ -1,0 +1,390 @@
+CLASS lhc_ZC_KEMERA_COMPLETION_DEC DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+
+    METHODS get_instance_authorizations FOR INSTANCE AUTHORIZATION
+      IMPORTING keys REQUEST requested_authorizations FOR zc_kemera_completion_dec RESULT result.
+
+    METHODS create FOR MODIFY
+      IMPORTING entities FOR CREATE zc_kemera_completion_dec.
+
+    METHODS update FOR MODIFY
+      IMPORTING entities FOR UPDATE zc_kemera_completion_dec.
+
+*    METHODS delete FOR MODIFY
+*      IMPORTING keys FOR DELETE zc_kemera_completion_dec.
+
+    METHODS read FOR READ
+      IMPORTING keys FOR READ zc_kemera_completion_dec RESULT result.
+
+    METHODS lock FOR LOCK
+      IMPORTING keys FOR LOCK zc_kemera_completion_dec.
+
+    METHODS rba_Geometries FOR READ
+      IMPORTING keys_rba FOR READ zc_kemera_completion_dec\_Geometries FULL result_requested RESULT result LINK association_links.
+
+    METHODS cba_Geometries FOR MODIFY
+      IMPORTING entities_cba FOR CREATE zc_kemera_completion_dec\_Geometries.
+
+
+
+ENDCLASS.
+
+CLASS lhc_ZC_KEMERA_COMPLETION_DEC IMPLEMENTATION.
+
+  METHOD get_instance_authorizations.
+  ENDMETHOD.
+
+
+
+
+*************************************************************************************
+* POST: Create new kemera completion declaration
+* Before inserting make sure the record does not exist
+*
+*************************************************************************************
+  METHOD create.
+
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<kemera_completiondecs_create>).
+
+      TRY.
+
+          DATA(lv_where_clause_string) = |FINANCINGACTNUMBER = '{ <kemera_completiondecs_create>-financingactnumber }' |.
+*  Check if the kemera completion dec exists or not
+          DATA(lv_does_exist) = zcl_gis_amdp_id1174odata=>_is_kemeracompletiondec_exist( where_clause_string = lv_where_clause_string ).
+
+*  if this record does nor exist do an insert
+
+          IF lv_does_exist EQ abap_false.
+            zcl_gis_amdp_id1174odata=>save_kemeracompletion_decs(
+              EXPORTING
+                financingactnumber             = <kemera_completiondecs_create>-financingactnumber
+                completiondeclarationreference = <kemera_completiondecs_create>-completiondeclarationreference
+                decisiondate                   = <kemera_completiondecs_create>-decisiondate
+                sentdate                       = <kemera_completiondecs_create>-sentdate
+                startdate                      = <kemera_completiondecs_create>-startdate
+                enddate                        = <kemera_completiondecs_create>-enddate
+                workcode                       = <kemera_completiondecs_create>-workcode
+                action                         = '1' "SAVE
+            ).
+
+**Success message here
+            INSERT VALUE #(
+             %cid     = <kemera_completiondecs_create>-%cid
+             financingactnumber = <kemera_completiondecs_create>-financingactnumber )
+           INTO TABLE mapped-zc_kemera_completion_dec.
+          ELSE." EXCEPTION CASE RECORD ALREADY  EXIST
+            INSERT VALUE #(
+             %cid     = <kemera_completiondecs_create>-%cid
+             %fail-cause    =  if_abap_behv=>cause-unspecific
+            financingactnumber = <kemera_completiondecs_create>-financingactnumber )
+            INTO TABLE failed-zc_kemera_completion_dec.
+
+            "Set message
+            APPEND VALUE #( %tky = <kemera_completiondecs_create>-%key
+                            %element-financingactnumber  = if_abap_behv=>mk-on
+                            %msg = new_message(
+                                     id       = '00'
+                                     number   = 001
+                                     severity = if_abap_behv_message=>severity-error
+                                     v1       = |FinancingActnumber: { <kemera_completiondecs_create>-financingactnumber } |
+                                     v2       = | Already exists in the DB|
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                             ) )   TO reported-zc_kemera_completion_dec.
+          ENDIF.
+        CATCH cx_root INTO DATA(lo_exception).
+          DATA(lv_exception_text) = lo_exception->get_text(  ).
+** Write the error message here
+          "Set failed keys
+          APPEND VALUE #(
+           %tky = <kemera_completiondecs_create>-%key
+           %cid     = <kemera_completiondecs_create>-%cid
+           financingactnumber = <kemera_completiondecs_create>-financingactnumber
+            )  TO failed-zc_kemera_completion_dec.
+
+
+          "Set message
+          APPEND VALUE #( %tky = <kemera_completiondecs_create>-%key
+                          %element-financingactnumber  = if_abap_behv=>mk-on
+                          %msg = new_message(
+                                   id       = '00'
+                                   number   = 001
+                                   severity = if_abap_behv_message=>severity-error
+                                   v1       = lv_exception_text "msg->value-msgv1
+*                                     v2       = msg->value-msgv2
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                           ) )   TO reported-zc_kemera_completion_dec.
+
+      ENDTRY.
+
+    ENDLOOP.
+
+
+  ENDMETHOD.
+
+*************************************************************************************
+* PUT: Update kemera completion declaration
+* Before inserting make sure the record does exist
+*
+*************************************************************************************
+  METHOD update.
+
+    LOOP AT entities ASSIGNING FIELD-SYMBOL(<kemera_completiondecs_create>).
+
+      TRY.
+
+          DATA(lv_where_clause_string) = |FINANCINGACTNUMBER = '{ <kemera_completiondecs_create>-financingactnumber }' |.
+*  Check if the kemera completion dec exists or not
+          DATA(lv_does_exist) = zcl_gis_amdp_id1174odata=>_is_kemeracompletiondec_exist( where_clause_string = lv_where_clause_string ).
+
+*  if this record does exist then do UPDATE
+          IF lv_does_exist EQ abap_true.
+            zcl_gis_amdp_id1174odata=>save_kemeracompletion_decs(
+              EXPORTING
+                financingactnumber             = <kemera_completiondecs_create>-financingactnumber
+                completiondeclarationreference = <kemera_completiondecs_create>-completiondeclarationreference
+                decisiondate                   = <kemera_completiondecs_create>-decisiondate
+                sentdate                       = <kemera_completiondecs_create>-sentdate
+                startdate                      = <kemera_completiondecs_create>-startdate
+                enddate                        = <kemera_completiondecs_create>-enddate
+                workcode                       = <kemera_completiondecs_create>-workcode
+                action                         = '2' "UPDATE
+            ).
+
+**Success message here
+            INSERT VALUE #(
+             %cid     = <kemera_completiondecs_create>-%key
+             financingactnumber = <kemera_completiondecs_create>-financingactnumber )
+             INTO TABLE mapped-zc_kemera_completion_dec.
+                      "Set message
+            APPEND VALUE #( %tky = <kemera_completiondecs_create>-%key
+                            %cid     = <kemera_completiondecs_create>-%key
+                            %update   = if_abap_behv=>mk-on
+                            %msg = new_message(
+                                     id       = '00'
+                                     number   = 001
+                                     severity = if_abap_behv_message=>severity-success
+                                     v1       = |FinancingActnumber: { <kemera_completiondecs_create>-financingactnumber } |
+                                     v2       = | is updated successfully|
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                             ) )   TO reported-zc_kemera_completion_dec.
+
+          ELSE." EXCEPTION CASE RECORD DOES NOT EXIST
+            INSERT VALUE #(
+             %cid     = <kemera_completiondecs_create>-%cid_ref
+              %fail-cause    =  if_abap_behv=>cause-unspecific
+             financingactnumber = <kemera_completiondecs_create>-financingactnumber )
+           INTO TABLE failed-zc_kemera_completion_dec.
+
+            "Set message
+            APPEND VALUE #( %tky = <kemera_completiondecs_create>-%key
+                            %element-financingactnumber  = if_abap_behv=>mk-on
+                            %msg = new_message(
+                                     id       = '00'
+                                     number   = 001
+                                     severity = if_abap_behv_message=>severity-error
+                                     v1       = |FinancingActnumber: { <kemera_completiondecs_create>-financingactnumber } |
+                                     v2       = | Does not  exists in the DB|
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                             ) )   TO reported-zc_kemera_completion_dec.
+          ENDIF.
+        CATCH cx_root INTO DATA(lo_exception).
+** Write the error message here
+          DATA(lv_exception_text) = lo_exception->get_text(  ).
+** Write the error message here
+          "Set failed keys
+          APPEND VALUE #(
+           %tky = <kemera_completiondecs_create>-%key
+           %cid     = <kemera_completiondecs_create>-%cid_ref
+           financingactnumber = <kemera_completiondecs_create>-financingactnumber
+            )  TO failed-zc_kemera_completion_dec.
+
+
+          "Set message
+          APPEND VALUE #( %tky = <kemera_completiondecs_create>-%key
+                          %element-financingactnumber  = if_abap_behv=>mk-on
+                          %msg = new_message(
+                                   id       = '00'
+                                   number   = 001
+                                   severity = if_abap_behv_message=>severity-error
+                                   v1       = lv_exception_text "msg->value-msgv1
+*                                     v2       = msg->value-msgv2
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                           ) )   TO reported-zc_kemera_completion_dec.
+      ENDTRY.
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+
+  METHOD read.
+
+    LOOP AT keys ASSIGNING FIELD-SYMBOL(<lfs_key>).
+
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD lock.
+  ENDMETHOD.
+
+
+
+  METHOD rba_Geometries.
+
+    LOOP AT keys_rba  ASSIGNING FIELD-SYMBOL(<keys_rba>).
+
+      DATA(ls_kemera_geom) =  <keys_rba>-%control.
+**Get the matching line
+
+    ENDLOOP.
+
+
+
+
+  ENDMETHOD.
+
+
+
+*************************************************************************************
+* POST: Create new kemera completion declaration GEOM
+* Before inserting make sure the GEOM record does not exist
+*
+*************************************************************************************
+
+  METHOD cba_Geometries.
+
+    LOOP AT entities_cba ASSIGNING FIELD-SYMBOL(<entity_cba>).
+
+      LOOP AT <entity_cba>-%target ASSIGNING FIELD-SYMBOL(<lfs_new_kemerageom>).
+**Get the matching line
+        TRY.
+
+            DATA(lv_where_clause_string) = |STANDREFERENCE = '{ <lfs_new_kemerageom>-standreference }' |.
+* Check that the if any record exists or not with the same  standreference
+            DATA(lv_does_exist) = zcl_gis_amdp_id1174odata=>_is_kemeracompdecgeom_exist( where_clause_string = lv_where_clause_string ).
+
+**  if this record does not exist then do INSERT
+            IF lv_does_exist NE abap_true.
+** Now insert the kemeradecision geometery record
+              zcl_gis_amdp_id1174odata=>save_kemeracompletion_decgeoms(
+                EXPORTING
+                  standreference       = <lfs_new_kemerageom>-standreference
+                  financingactnumber   = <entity_cba>-financingactnumber
+                  standnumber          = <lfs_new_kemerageom>-standnumber
+                  geojson              = <lfs_new_kemerageom>-geojson
+                  status               = <lfs_new_kemerageom>-status
+                  standnumberextension = <lfs_new_kemerageom>-standnumberextension
+                  costtype             = <lfs_new_kemerageom>-costtype
+                  action               = '1'
+              ).
+
+****Success message here
+              INSERT VALUE #(
+               %cid     = <lfs_new_kemerageom>-%cid
+               standreference =  <lfs_new_kemerageom>-standreference )
+               INTO TABLE mapped-zc_kemera_compdec_geoms.
+            ELSE." EXCEPTION CASE ALREADY EXISTS
+
+              INSERT VALUE #(
+              %cid     = <lfs_new_kemerageom>-%cid
+              %fail-cause    =  if_abap_behv=>cause-unspecific
+             standreference =  <lfs_new_kemerageom>-standreference  )
+             INTO TABLE failed-zc_kemera_compdec_geoms.
+
+              "Set message
+              APPEND VALUE #( %tky = <lfs_new_kemerageom>-%key
+                              %element-financingactnumber  = if_abap_behv=>mk-on
+                              %msg = new_message(
+                                       id       = '00'
+                                       number   = 001
+                                       severity = if_abap_behv_message=>severity-error
+                                       v1       = |StandReference: { <lfs_new_kemerageom>-standreference } |
+                                       v2       = | Already exists in the DB|
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                               ) )   TO reported-zc_kemera_compdec_geoms.
+
+            ENDIF.
+          CATCH cx_root INTO DATA(lo_exception).
+** Write the error message here
+            DATA(lv_exception_text) = lo_exception->get_text(  ).
+            "Set failed keys
+            APPEND VALUE #(
+             %tky = <lfs_new_kemerageom>-%key
+             %cid     = <lfs_new_kemerageom>-%cid
+             standreference =  <lfs_new_kemerageom>-standreference
+              )  TO failed-zc_kemera_compdec_geoms.
+
+
+            "Set message
+            APPEND VALUE #( %tky = <lfs_new_kemerageom>-%key
+                            %element-financingactnumber  = if_abap_behv=>mk-on
+                            %msg = new_message(
+                                     id       = '00'
+                                     number   = 001
+                                     severity = if_abap_behv_message=>severity-error
+                                     v1       = lv_exception_text "msg->value-msgv1
+*                                     v2       = msg->value-msgv2
+*                                     v3       = msg->value-msgv3
+*                                     v4      =  msg->value-msgv4
+                             ) )   TO reported-zc_kemera_compdec_geoms.
+
+
+        ENDTRY.
+      ENDLOOP.
+
+    ENDLOOP.
+
+
+
+
+
+  ENDMETHOD.
+
+
+
+
+ENDCLASS.
+
+
+
+CLASS lsc_ZC_KEMERA_COMPLETION_DEC DEFINITION INHERITING FROM cl_abap_behavior_saver.
+  PROTECTED SECTION.
+
+    METHODS finalize REDEFINITION.
+
+    METHODS check_before_save REDEFINITION.
+
+    METHODS save REDEFINITION.
+
+    METHODS cleanup REDEFINITION.
+
+    METHODS cleanup_finalize REDEFINITION.
+
+ENDCLASS.
+
+CLASS lsc_ZC_KEMERA_COMPLETION_DEC IMPLEMENTATION.
+
+  METHOD finalize.
+  ENDMETHOD.
+
+  METHOD check_before_save.
+  ENDMETHOD.
+
+  METHOD save.
+  ENDMETHOD.
+
+  METHOD cleanup.
+  ENDMETHOD.
+
+  METHOD cleanup_finalize.
+  ENDMETHOD.
+
+ENDCLASS.

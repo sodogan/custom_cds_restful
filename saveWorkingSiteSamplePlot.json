@@ -1,0 +1,150 @@
+{
+    "saveWorkingSiteSamplePlot": {
+        /*
+        Mandatory ID of the contract
+        Will be used for searching as wood purchase contracts (CONTRACT.CONTRACTID)
+        as for searching silvicultural orders (CONTRACT.SILVICULTURALORDERID)
+        */
+        "contractId": "428971",
+        /*
+        Optional contract's or silvicultural order's decade
+        */
+        "decade": "1",
+        /*
+        Mandatory wood purchase block's number (HARVESTINGBLOCK.BLOCKNUMBER)
+        */
+        "blockNumber": 1,
+        /*
+        Optional resource ID in the WoodForce system (SAMPLEPLOT.RESOURCEID)
+        */
+        "resourceId": 123,
+        /*
+        A list of sample plots. At least 1 sample plot object must be given
+        */
+        "samplePlots": [
+            {
+                /*
+                Mandatory stand number (SAMPLEPLOT.STANDNUMBER)
+                */
+                "standNumber": 1,
+                /*
+                Optional number of the sample plot (SAMPLEPLOT.SAMPLEPLOTNUMBER)
+                */
+                "samplePlotNumber": 1,
+                /*
+                Mandatory type of sample plot (SAMPLEPLOT.SAMPLEPLOTTYPE):
+                1 - WorkingSiteQualityControlCutting
+                2 - WorkingSiteQualityControlPlantManagement
+                3 - WorkingSiteQualityControlSoilConditioning
+                4 - WorkingSiteQualityControlSilviculture
+                5 - WorkingSiteQualityControlFertilization
+                */
+                "samplePlotType": "1",
+                /*
+                Optional status of the sample plot (SAMPLEPLOT.STATUS):
+                null - Unknown
+                1 - Inserted
+                2 - Updated
+                3 - Deleted - If this status is set, the sample plot will not appear in search results
+                */
+                "status": 1,
+                /*
+                Optional source of inspection, max length 50 characters (SAMPLEPLOT.SOURCEOFINSPECTION)
+                The supported values are: WoodForce, Haukka and Metsäkeskus
+                */
+                "sourceOfInspection": "WoodForce/Haukka/Metsäkeskus",
+                /*
+                Optional "real" geometry of the sample plot in GeoJSON format (RFC 7946) (SAMPLEPLOT.GEOLOC_REAL)
+                Represents sample plot locations taken by the contractor in the WoodForce system
+                */
+                "geometryReal": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            279450,
+                            6802732
+                        ]
+                    },
+                    "properties": {
+                        "name": "EPSG:3067"
+                    }
+                },
+                /*
+                Optional "required" geometry for the sample plot in GeoJSON format (RFC 7946) (SAMPLEPLOT.GEOLOC_MJ)
+                Represents Metsä Group's random sample plot locations for contractor quality measurements
+                */
+                "geometryRequired": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            279451,
+                            6802733
+                        ]
+                    },
+                    "properties": {
+                        "name": "EPSG:3067"
+                    }
+                },
+                /*
+                Optional geometry from the Haukka system for the sample plot in GeoJSON format (RFC 7946) (SAMPLEPLOT.GEOLOC_HAUKKA)
+                */
+                "geometryHaukka": {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                            279452,
+                            6802734
+                        ]
+                    },
+                    "properties": {
+                        "name": "EPSG:3067"
+                    }
+                },
+                /*
+                Optional list of hoppers related to a sample plot
+                */
+                "hoppers": [
+                    {
+                        /*
+                        Optional ID of the hopper (HOPPER.HOPPERID)
+                        */
+                        "id": "28",
+                        /*
+                        Optional type of the hopper, max 5 characters (HOPPER.HOPPERTYPE)
+                        */
+                        "hopperType": "htype",
+                        /*
+                        Optional volume of seeds in hopper (HOPPER.VOLUME)
+                        */
+                        "volume": 123,
+                        /*
+                        Optional text about the hopper, max 100 characters (HOPPER.INFOTEXT)
+                        */
+                        "infoText": "Info text",
+                        /*
+                        Optional hopper's geometry in GeoJSON format (RFC 7946) (HOPPER.GEOLOC)
+                        */
+                        "geometry": {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": [
+                                    279453,
+                                    6802735
+                                ]
+                            },
+                            "properties": {
+                                "name": "EPSG:3067"
+                            }
+                        }
+                    },
+                    ...
+                ]
+            },
+            ...
+        ]
+    }
+}

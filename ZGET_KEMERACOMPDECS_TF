@@ -1,0 +1,17 @@
+@ClientDependent: false
+@EndUserText.label: 'KemeraCompletionDecs'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+define table function ZGET_KEMERACOMPDECS_TF
+with parameters
+   @EndUserText.label: 'Where clause'   
+    p_where : abap.char(1333)
+returns {
+   financingactnumber     : zfinactnumber;
+   completiondeclarationreference        : abap.string;
+   decisiondate  : abap.string;
+   sentdate    : abap.string;
+   startdate    : abap.string;
+   enddate    : abap.string;
+   workcode    : abap.string;
+}
+implemented by method zcl_gis_amdp_id1174odata=>get_kemeracompletion_decs;

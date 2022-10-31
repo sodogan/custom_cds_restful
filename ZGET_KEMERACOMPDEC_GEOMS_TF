@@ -1,0 +1,19 @@
+@ClientDependent: false
+@EndUserText.label: 'KemeraCompletionDecs'
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+define table function ZGET_KEMERACOMPDEC_GEOMS_TF
+with parameters
+   @EndUserText.label: 'Where clause'   
+    p_where : abap.char(1333)
+returns {
+   standreference       : zstandreference;
+   financingactnumber   : zfinactnumber;
+   standnumber          : abap.string;
+   geoloc               : geom_ewkb;
+   status                : abap.string;
+   standnumberextension  : abap.string;
+   costtype    : abap.string;
+   
+   
+}
+implemented by method zcl_gis_amdp_id1174odata=>get_kemeracompdec_geoms_tf;

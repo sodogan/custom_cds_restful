@@ -1,0 +1,79 @@
+CLASS lhc_ZC_KEMERA_COMPDEC_GEOMS DEFINITION INHERITING FROM cl_abap_behavior_handler.
+  PRIVATE SECTION.
+
+    METHODS update FOR MODIFY
+      IMPORTING entities FOR UPDATE zc_kemera_compdec_geoms.
+
+    METHODS read FOR READ
+      IMPORTING keys FOR READ zc_kemera_compdec_geoms RESULT result.
+
+    METHODS rba_Kemeracompletiondecs FOR READ
+      IMPORTING keys_rba FOR READ zc_kemera_compdec_geoms\_Kemeracompletiondecs FULL result_requested RESULT result LINK association_links.
+
+ENDCLASS.
+
+CLASS lhc_ZC_KEMERA_COMPDEC_GEOMS IMPLEMENTATION.
+
+*************************************************************************************
+* PUT: Update kemera completion declaration GEOM
+* Before inserting make sure the GEOM record does  exist
+*
+*************************************************************************************
+  METHOD update.
+
+    LOOP AT entities  ASSIGNING FIELD-SYMBOL(<entity>).
+
+**Get the matching line
+      TRY.
+
+          DATA(lv_where_clause_string) = |STANDREFERENCE = '{ <entity>-standreference }' |.
+* Check that the if any record exists or not with the same  standreference
+          DATA(lv_does_exist) = zcl_gis_amdp_id1174odata=>_is_kemeracompdecgeom_exist( where_clause_string = lv_where_clause_string ).
+
+**  if this record does exist then do UPDATE
+          IF abap_true EQ abap_true.
+** Now insert the kemeradecision geometery record
+            zcl_gis_amdp_id1174odata=>save_kemeracompletion_decgeoms(
+              EXPORTING
+                standreference       = <entity>-standreference
+                financingactnumber   = <entity>-financingactnumber
+                standnumber          = <entity>-standnumber
+                geojson              = <entity>-geojson
+                status               = <entity>-status
+                standnumberextension = <entity>-standnumberextension
+                costtype             = <entity>-costtype
+                action               = '2' "UPDATE
+            ).
+
+****Success message here
+            INSERT VALUE #(
+             %cid     = <entity>-%cid_ref
+             standreference =  <entity>-standreference )
+             INTO TABLE mapped-zc_kemera_compdec_geoms.
+          ELSE." EXCEPTION CASE ALREADY EXISTS
+           INSERT VALUE #(
+            %cid     = <entity>-%cid_ref
+            standreference =  <entity>-standreference
+            %fail   = if_abap_behv=>cause
+              )
+           INTO TABLE failed-zc_kemera_compdec_geoms.
+          ENDIF.
+        CATCH cx_root INTO DATA(lo_exception).
+*** Write the error message here
+          INSERT VALUE #(
+              %cid     = <entity>-%cid_ref
+              standreference =  <entity>-standreference )
+            INTO TABLE failed-zc_kemera_compdec_geoms.
+      ENDTRY.
+
+    ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD read.
+  ENDMETHOD.
+
+  METHOD rba_Kemeracompletiondecs.
+  ENDMETHOD.
+
+ENDCLASS.

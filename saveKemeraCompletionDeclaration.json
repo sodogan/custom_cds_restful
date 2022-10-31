@@ -1,0 +1,81 @@
+{
+  "saveKemeraCompletionDeclaration": {
+    "completionDeclarationReference": "10-2009-46407-I-1",
+    "decisionDate": "2018-10-21",
+    "endDate": "2018-10-21",
+    "financingActCompletionStands": [
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                281267.961,
+                6965423.381
+              ],
+              [
+                281267.989,
+                6965416.778
+              ],
+              [
+                281269.351,
+                6965410.707
+              ],
+              [
+                281277.289,
+                6965397.677
+              ],
+              [
+                281267.961,
+                6965423.381
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "standNumber": "001",
+        "standNumberExtension": "A",
+        "standReference": "10-2009-46407-001",
+        "status": 1,
+        "costType": "312"
+      },
+      {
+        "geometry": {
+          "coordinates": [
+            [
+              [
+                281267.961,
+                6965423.381
+              ],
+              [
+                281267.989,
+                6965416.778
+              ],
+              [
+                281269.351,
+                6965410.707
+              ],
+              [
+                281277.289,
+                6965397.677
+              ],
+              [
+                281267.961,
+                6965423.381
+              ]
+            ]
+          ],
+          "type": "Polygon"
+        },
+        "standNumber": "002",
+        "standNumberExtension": "A",
+        "standReference": "10-2009-46407-002",
+        "status": 2,
+        "costType": "312"
+      }
+    ],
+    "financingActNumber": "10-2009-46407",
+    "sentDate": "2018-10-21",
+    "startDate": "2018-10-21",
+    "workCode": 47
+  }
+}

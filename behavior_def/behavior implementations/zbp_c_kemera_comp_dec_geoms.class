@@ -1,0 +1,5 @@
+CLASS zbp_c_kemera_comp_dec_geoms DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zc_kemera_completion_dec.
+ENDCLASS.
+
+CLASS zbp_c_kemera_comp_dec_geoms IMPLEMENTATION.
+ENDCLASS.

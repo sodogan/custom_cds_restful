@@ -1,0 +1,31 @@
+unmanaged implementation in class zbp_c_kemera_completion_dec unique;
+//strict; //Comment this line in to enable strict mode. The strict mode is prerequisite to be future proof regarding syntax and to be able to release your BO.
+
+define behavior for ZC_KEMERA_COMPLETION_DEC // alias kemeracompdec
+//late numbering
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  field ( mandatory ) FINANCINGACTNUMBER, COMPLETIONDECLARATIONREFERENCE,DECISIONDATE, SENTDATE, STARTDATE, ENDDATE,WORKCODE;
+
+
+
+  create;
+  update;
+//  delete;--NOT SUPPORTED
+  association _Geometries { create; }
+}
+
+define behavior for ZC_KEMERA_COMPDEC_GEOMS // alias kemeracompdecgeoms
+implementation in class zbp_c_kemera_comp_dec_geoms
+//late numbering
+lock dependent by _KemeraCompletionDecs
+authorization dependent by _KemeraCompletionDecs
+//etag master <field_name>
+{
+  update;
+//  delete;--NOT SUPPORTED
+  field ( readonly:update   ) financingactnumber;
+  association _KemeraCompletionDecs;
+}
